@@ -6,7 +6,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from prompt import get_concept_prompt, get_aug_questions_prompt
 from structure import Process, AugmentedQuestions
 
-if __name__ == '__main__':
+
+def generate(q: str = "竹籃裡有24顆蘋果，紅蘋果有6顆，其他是青蘋果，青蘋果有幾顆？"):
     parser = JsonOutputParser(pydantic_object=Process)
     aug_parser = JsonOutputParser(pydantic_object=AugmentedQuestions)
 
@@ -17,7 +18,6 @@ if __name__ == '__main__':
                       max_tokens=1024)
 
     # Question
-    q = "竹籃裡有24顆蘋果，紅蘋果有6顆，其他是青蘋果，青蘋果有幾顆？"
     n_questions = 5
 
     chain = concept_prompt | chat | parser
@@ -36,3 +36,7 @@ if __name__ == '__main__':
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     print(result)
+
+
+if __name__ == '__main__':
+    generate()
