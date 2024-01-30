@@ -19,6 +19,17 @@ concept_prompt_msg = HumanMessagePromptTemplate.from_template(
     "Your response:\n"
 )
 
+concept_prompt_start_msg = HumanMessagePromptTemplate.from_template(
+    "According to the following SAMPLE QUESTION and IMAGES, list several clear problem-solving concepts.\n"
+    "SAMPLE QUESTION:\n"
+    "{question}\n"
+)
+
+concept_prompt_end_msg = HumanMessagePromptTemplate.from_template(
+    "Format the response in traditional chinese like: {format_instructions}\n"
+    "Your response:\n"
+)
+
 aug_questions_prompt_msg = HumanMessagePromptTemplate.from_template(
     "According sample_requests in the following CONCEPT, help students understand concepts and generate different "
     "questions that conform to the same problem-solving concepts, the recommended method is to design "
