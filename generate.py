@@ -1,13 +1,16 @@
-import json
+import ast
+import os.path
 
+import pandas as pd
 from langchain.schema.messages import HumanMessage
 from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
 
+from chains import create_concept_chain, create_augment_chain
 from prompt import get_concept_prompt, get_aug_questions_prompt, concept_prompt_start_msg, concept_prompt_end_msg, \
     sys_prompt_msg
 from structure import Process, AugmentedQuestions
-from utils import encode_image
+from utils import encode_image, dump_to_json
 
 
 def generate(
@@ -35,15 +38,15 @@ def generate(
 
     result['question'] = q
 
-    with open('result.json', 'w', ) as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
+    dump_to_json(result)
 
     print(result)
 
 
 def generate_w_images(
         q: str = "下圖中的虛線是對稱軸的話，請寫出編號。",
-        n_questions: int = 5
+        n_questions: int = 5,
+        image_path: str = "data/images/ex5-1.jpg"
 ):
     parser = JsonOutputParser(pydantic_object=Process)
     aug_parser = JsonOutputParser(pydantic_object=AugmentedQuestions)
@@ -52,9 +55,6 @@ def generate_w_images(
     chat = ChatOpenAI(temperature=0,
                       model="gpt-4-vision-preview",
                       max_tokens=1024)
-
-    # Path to your image
-    image_path = "ex5-1.jpg"
 
     # Getting the base64 string
     base64_image = encode_image(image_path)
@@ -89,12 +89,67 @@ def generate_w_images(
 
     result['question'] = q
 
-    with open('result.json', 'w', ) as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
+    dump_to_json(result)
 
     print(result)
+
+
+def generate_from_csv(
+        csv_file: str = "data/question_list.csv",
+        image_folder: str = "data/images",
+        n_questions: int = 5,
+):
+    dtypes = {'unit': str, 'grade': str, 'question': str, 'hint': str, 'images': object}
+    df = pd.read_csv(csv_file, dtype=dtypes)
+    question_list = df['question'].to_list()
+    images_list = df['images'].apply(ast.literal_eval).to_list()
+
+    chain_q = create_concept_chain()
+    chain_img_q = create_concept_chain(prompt_template=False)
+    aug_chain = create_augment_chain()
+    parser = JsonOutputParser(pydantic_object=Process)
+
+    results = []
+
+    for q, image_files in zip(question_list, images_list):
+        if q:
+            if image_files:
+                msg = HumanMessage(content=[{"type": "text", "text": "IMAGES:"}])
+                for img_f in image_files:
+                    # Getting the base64 string
+                    base64_image = encode_image(os.path.join(image_folder, img_f))
+                    img_data = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}",
+                            "detail": "auto",
+                        },
+                    }
+                    msg.content.append(img_data)
+                inputs = [
+                    sys_prompt_msg.format(),  # SystemMessage
+                    concept_prompt_start_msg.format(question=q),
+                    msg,
+                    concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions())
+                ]
+                result = chain_img_q.invoke(inputs)
+            else:
+                result = chain_q.invoke({"question": q})
+
+            for c in result['concepts']:
+                q_results = aug_chain.invoke({"concept": c, "n_questions": n_questions})
+                c['sample_questions'] += q_results['questions']
+
+            result = {'question': q, 'concepts': result['concepts']}
+        else:
+            result = {'question': q}
+
+        results.append(result)
+
+    dump_to_json({'results': results})
 
 
 if __name__ == '__main__':
     generate()
     generate_w_images()
+    generate_from_csv()
