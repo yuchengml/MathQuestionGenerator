@@ -96,5 +96,5 @@ def generate_w_images(
 
 
 if __name__ == '__main__':
-    # generate()
+    generate()
     generate_w_images()
