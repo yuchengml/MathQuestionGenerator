@@ -15,6 +15,7 @@ from utils import encode_image, dump_to_json
 
 def generate(
         q: str = "竹籃裡有24顆蘋果，紅蘋果有6顆，其他是青蘋果，青蘋果有幾顆？",
+        grade: str = "first",
         n_questions: int = 5
 ):
     parser = JsonOutputParser(pydantic_object=Process)
@@ -29,7 +30,7 @@ def generate(
     chain = concept_prompt | chat | parser
     aug_chain = aug_questions_prompt | chat | aug_parser
 
-    result = chain.invoke({"question": q})
+    result = chain.invoke({"question": q, "grade": grade})
     # print(result)
 
     for c in result['concepts']:
@@ -45,6 +46,7 @@ def generate(
 
 def generate_w_images(
         q: str = "下圖中的虛線是對稱軸的話，請寫出編號。",
+        grade: str = "fifth",
         n_questions: int = 5,
         image_path: str = "data/images/ex5-1.jpg"
 ):
@@ -77,7 +79,7 @@ def generate_w_images(
                 },
             ]
         ),
-        concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions())
+        concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions(), grade=grade)
     ]
 
     result = chain.invoke(inputs)
@@ -102,6 +104,7 @@ def generate_from_csv(
     dtypes = {'unit': str, 'grade': str, 'question': str, 'hint': str, 'images': object}
     df = pd.read_csv(csv_file, dtype=dtypes)
     question_list = df['question'].to_list()
+    grade_list = df['grade'].to_list()
     images_list = df['images'].apply(ast.literal_eval).to_list()
 
     chain_q = create_concept_chain()
@@ -111,7 +114,7 @@ def generate_from_csv(
 
     results = []
 
-    for q, image_files in zip(question_list, images_list):
+    for q, image_files, grade in zip(question_list, images_list, grade_list):
         if q:
             if image_files:
                 msg = HumanMessage(content=[{"type": "text", "text": "IMAGES:"}])
@@ -130,11 +133,12 @@ def generate_from_csv(
                     sys_prompt_msg.format(),  # SystemMessage
                     concept_prompt_start_msg.format(question=q),
                     msg,
-                    concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions())
+                    concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions(),
+                                                  grade=grade)
                 ]
                 result = chain_img_q.invoke(inputs)
             else:
-                result = chain_q.invoke({"question": q})
+                result = chain_q.invoke({"question": q, "grade": grade})
 
             for c in result['concepts']:
                 q_results = aug_chain.invoke({"concept": c, "n_questions": n_questions})
