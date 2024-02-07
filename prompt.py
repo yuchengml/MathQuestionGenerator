@@ -12,18 +12,22 @@ sys_prompt_msg = SystemMessagePromptTemplate.from_template(
 )
 
 concept_prompt_msg = HumanMessagePromptTemplate.from_template(
-    "According to the following SAMPLE QUESTION, list several clear problem-solving concepts.\n"
+    "According to the following SAMPLE QUESTION and HINT, list several clear problem-solving concepts.\n"
     "SAMPLE QUESTION:\n"
     "{question}\n\n"
+    "HINT:\n"
+    "{hint}\n\n"
     "The response must meet the understanding abilities of third grade elementary school students: {grade}\n"
     "Format the response like: {format_instructions}\n"
     "Your response:\n"
 )
 
 concept_prompt_start_msg = HumanMessagePromptTemplate.from_template(
-    "According to the following SAMPLE QUESTION and IMAGES, list several clear problem-solving concepts.\n"
+    "According to the following SAMPLE QUESTION, HINT and IMAGES, list several clear problem-solving concepts.\n"
     "SAMPLE QUESTION:\n"
     "{question}\n"
+    "HINT:\n"
+    "{hint}\n"
 )
 
 concept_prompt_end_msg = HumanMessagePromptTemplate.from_template(

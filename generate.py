@@ -16,6 +16,7 @@ from utils import encode_image, dump_to_json
 def generate(
         q: str = "竹籃裡有24顆蘋果，紅蘋果有6顆，其他是青蘋果，青蘋果有幾顆？",
         grade: str = "first",
+        hint: str = "單元：減法的應用問題(99以內）。老師的話：其他是白湯圓，表示要求剩下來的湯圓",
         n_questions: int = 5
 ):
     parser = JsonOutputParser(pydantic_object=Process)
@@ -30,7 +31,7 @@ def generate(
     chain = concept_prompt | chat | parser
     aug_chain = aug_questions_prompt | chat | aug_parser
 
-    result = chain.invoke({"question": q, "grade": grade})
+    result = chain.invoke({"question": q, "grade": grade, "hint": hint})
     # print(result)
 
     for c in result['concepts']:
@@ -47,6 +48,7 @@ def generate(
 def generate_w_images(
         q: str = "下圖中的虛線是對稱軸的話，請寫出編號。",
         grade: str = "fifth",
+        hint: str = "單元：認識線對稱圖形和對稱軸。老師的話：沿著虛線摺摺看，摺線兩側可以使圖形，完全疊合，虛線就是對稱軸。",
         n_questions: int = 5,
         image_path: str = "data/images/ex5-1.jpg"
 ):
@@ -66,7 +68,7 @@ def generate_w_images(
 
     inputs = [
         sys_prompt_msg.format(),  # SystemMessage
-        concept_prompt_start_msg.format(question=q),
+        concept_prompt_start_msg.format(question=q, hint=hint),
         HumanMessage(
             content=[
                 {"type": "text", "text": "IMAGES:"},
@@ -103,9 +105,12 @@ def generate_from_csv(
 ):
     dtypes = {'unit': str, 'grade': str, 'question': str, 'hint': str, 'images': object}
     df = pd.read_csv(csv_file, dtype=dtypes)
+    df.fillna({'hint': '', 'unit': ''}, inplace=True)
+
     question_list = df['question'].to_list()
     grade_list = df['grade'].to_list()
     images_list = df['images'].apply(ast.literal_eval).to_list()
+    hint_list = [f"{u} {h}" for u, h in zip(df['unit'].to_list(), df['hint'].to_list())]
 
     chain_q = create_concept_chain()
     chain_img_q = create_concept_chain(prompt_template=False)
@@ -114,7 +119,7 @@ def generate_from_csv(
 
     results = []
 
-    for q, image_files, grade in zip(question_list, images_list, grade_list):
+    for q, image_files, grade, hint in zip(question_list, images_list, grade_list, hint_list):
         if q:
             if image_files:
                 msg = HumanMessage(content=[{"type": "text", "text": "IMAGES:"}])
@@ -131,14 +136,14 @@ def generate_from_csv(
                     msg.content.append(img_data)
                 inputs = [
                     sys_prompt_msg.format(),  # SystemMessage
-                    concept_prompt_start_msg.format(question=q),
+                    concept_prompt_start_msg.format(question=q, hint=hint),
                     msg,
                     concept_prompt_end_msg.format(format_instructions=parser.get_format_instructions(),
                                                   grade=grade)
                 ]
                 result = chain_img_q.invoke(inputs)
             else:
-                result = chain_q.invoke({"question": q, "grade": grade})
+                result = chain_q.invoke({"question": q, "grade": grade, "hint": hint})
 
             for c in result['concepts']:
                 q_results = aug_chain.invoke({"concept": c, "n_questions": n_questions})
