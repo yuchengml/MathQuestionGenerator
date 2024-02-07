@@ -17,7 +17,7 @@ concept_prompt_msg = HumanMessagePromptTemplate.from_template(
     "{question}\n\n"
     "HINT:\n"
     "{hint}\n\n"
-    "The response must meet the understanding abilities of third grade elementary school students: {grade}\n"
+    "The response must meet the understanding abilities of {grade} grade elementary school students.\n"
     "Format the response like: {format_instructions}\n"
     "Your response:\n"
 )
@@ -31,7 +31,7 @@ concept_prompt_start_msg = HumanMessagePromptTemplate.from_template(
 )
 
 concept_prompt_end_msg = HumanMessagePromptTemplate.from_template(
-    "The response must meet the understanding abilities of third grade elementary school students: {grade}\n"
+    "The response must meet the understanding abilities of {grade} grade elementary school students.\n"
     "Format the response like: {format_instructions}\n"
     "Your response:\n"
 )
