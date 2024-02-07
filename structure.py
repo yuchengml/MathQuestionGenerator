@@ -4,8 +4,8 @@ from pydantic.v1 import BaseModel, Field
 
 
 class SolvingConcept(BaseModel):
-    concept: str = Field(description="A problem-solving concept name to recognize.")
-    description: str = Field(description="Concept description.")
+    concept: str = Field(description="A problem-solving concept name in traditional chinese to recognize.")
+    description: str = Field(description="Concept description in traditional chinese.")
     sample_questions: List[str] = Field(
         description="Questions based on the presented problem-solving concept.")
 
@@ -17,4 +17,5 @@ class Process(BaseModel):
 
 class AugmentedQuestions(SolvingConcept):
     questions: List[str] = Field(
-        description="Augmented questions related questions based on the presented problem-solving concept.")
+        description="Augmented questions in traditional chinese related questions based on the presented "
+                    "problem-solving concept.")

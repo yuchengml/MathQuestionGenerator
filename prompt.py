@@ -17,7 +17,7 @@ concept_prompt_msg = HumanMessagePromptTemplate.from_template(
     "{question}\n\n"
     "The response must meet the understanding abilities of third grade elementary school students: {grade}\n"
     "Format the response like: {format_instructions}\n"
-    "Your response in traditional chinese:\n"
+    "Your response:\n"
 )
 
 concept_prompt_start_msg = HumanMessagePromptTemplate.from_template(
@@ -28,8 +28,8 @@ concept_prompt_start_msg = HumanMessagePromptTemplate.from_template(
 
 concept_prompt_end_msg = HumanMessagePromptTemplate.from_template(
     "The response must meet the understanding abilities of third grade elementary school students: {grade}\n"
-    "Format the responselike: {format_instructions}\n"
-    "Your response in traditional chinese:\n"
+    "Format the response like: {format_instructions}\n"
+    "Your response:\n"
 )
 
 aug_questions_prompt_msg = HumanMessagePromptTemplate.from_template(
@@ -38,7 +38,7 @@ aug_questions_prompt_msg = HumanMessagePromptTemplate.from_template(
     "{n_questions} questions based on different situations, things, or numbers.\n"
     "CONCEPT:\n"
     "{concept}\n\n"
-    "Format the response in traditional chinese like: {format_instructions}\n"
+    "Format the response like: {format_instructions}\n"
     "Your response:\n"
 )
 
